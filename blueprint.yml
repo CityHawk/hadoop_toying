@@ -1,0 +1,17 @@
+nodes:
+    nn-001:
+        size: 66
+        image: 284203
+        role: namenode
+    dn-001:
+        size: 66
+        image: 284203
+        role: datanode
+    dn-002:
+        size: 66
+        image: 284203
+        role: datanode
+    dn-003:
+        size: 66
+        image: 284203
+        role: datanode
