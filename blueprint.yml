@@ -1,6 +1,6 @@
 nodes:
     nn-001:
-        size: 66
+        size: 63
         image: 284203
         role: namenode
     dn-001:

@@ -68,12 +68,14 @@ task :create do
     # create chef environment
     puts `knife environment create e_#{@env_id} -d`
     threads = []
+    node_ids=[]
     blueprint["nodes"].each do |name, node|
         threads << Thread.new do
             nodename = "#{name}-#{@env_id}.#{@config_data['other']['domain']}"
             # spin up server
             lognode nodename, "creating node"
             fnode = create_node nodename, node["size"], node["image"]
+            node_ids.push(fnode)
             #knife bootstap servers
             lognode nodename, "bootstrapping node"
             `knife bootstrap #{fnode} -x root --no-host-key-verify`
@@ -92,6 +94,8 @@ task :create do
     end
 
     # run chef-client on them
+    puts "JFYI: #{node_ids.join(" ")}"
+
 end
 
 task :clear, [:e_id] do |t, args|
