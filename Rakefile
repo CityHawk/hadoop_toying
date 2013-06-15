@@ -18,45 +18,51 @@ def status o
     end
 end
 
-task :create do
-    def create_node name, size, image
-        dropletname = name
-        puts "Creating node #{dropletname}".colorize (:blue)
-        drop = @dc.droplets.create :name => dropletname,\
-        :size_id => size, :image_id => image, :region_id => 1, :ssh_key_ids => @config_data['other']['ssh_key_id']
-        #puts drop
-        puts "Node created #{dropletname} #{status(drop)}"
-        # wait until DNS changes propagate
-        puts "Waiting for ip_address of node #{dropletname}"
-        while 1
-            poll_drop = @dc.droplets.show(drop.droplet.id)
-            break if poll_drop.droplet.ip_address
-            sleep 5
-        end
-        return poll_drop
-        #printf "\nnode #{dropletname} got ip address #{poll_drop.droplet.ip_address}. Creating record..."
-        #rec = @dc.domains.create :name => dropletname, :ip_address => poll_drop.droplet.ip_address
-        #puts status(rec)
+def lognode node, msg
+    puts "#{node}: ".colorize(:yellow)+msg
+end
 
-    end
-
-    def server_ready? node
-        begin
-            Timeout::timeout(1) do
-                begin
-                    s = TCPSocket.new(node.droplet.ip_address, 22)
-                    s.close
-                    return true
-                rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-                    return false
-                end
+def server_ready? node
+    begin
+        Timeout::timeout(1) do
+            begin
+                s = TCPSocket.new(node, 22)
+                s.close
+                return true
+            rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+                return false
             end
-        rescue Timeout::Error
         end
-
-        return false
+    rescue Timeout::Error
     end
 
+    return false
+end
+
+def create_node dropletname, size, image
+    drop = @dc.droplets.create :name => dropletname,\
+    :size_id => size, :image_id => image, :region_id => 1, :ssh_key_ids => @config_data['other']['ssh_key_id']
+    #puts drop
+    lognode dropletname, "node created #{status(drop)}"
+    # wait until DNS changes propagate
+    lognode dropletname, "waiting for ip_address of node"
+    while 1
+        poll_drop = @dc.droplets.show(drop.droplet.id)
+        break if poll_drop.droplet.ip_address
+        sleep 5
+    end
+    lognode dropletname, "waiting node to be accessible"
+    while !server_ready? poll_drop.droplet.ip_address do
+        sleep 10
+    end
+    return poll_drop.droplet.ip_address
+    #printf "\nnode #{dropletname} got ip address #{poll_drop.droplet.ip_address}. Creating record..."
+    #rec = @dc.domains.create :name => dropletname, :ip_address => poll_drop.droplet.ip_address
+    #puts status(rec)
+
+end
+
+task :create do
     blueprint = YAML.load_file("blueprint.yml")
     @env_id = (Time.now.to_i).to_s(36)
     # create chef environment
@@ -65,25 +71,26 @@ task :create do
     blueprint["nodes"].each do |name, node|
         threads << Thread.new do
             nodename = "#{name}-#{@env_id}.#{@config_data['other']['domain']}"
-            # create N servers
+            # spin up server
+            lognode nodename, "creating node"
             fnode = create_node nodename, node["size"], node["image"]
-            puts "waiting node #{nodename} to be accessible"
-            while !server_ready? fnode do
-                sleep 10
-            end
             #knife bootstap servers
-            puts "bootstrapping node #{nodename}"
-            `knife bootstrap #{fnode.droplet.ip_address} -x root --no-host-key-verify`
-            puts "bootstrap node #{nodename} finished, exit code #{$?}"
+            lognode nodename, "bootstrapping node"
+            `knife bootstrap #{fnode} -x root --no-host-key-verify`
+            lognode nodename, "bootstrap node finished, exit code #{$?.to_i}"
+            # add servers to environment
+            # add roles to the servers
+            lognode nodename, "setting  environment and run_list to #{node["role"]}"
+            `knife exec -E "n=Chef::Node.load('#{name}-#{@env_id}'); n.chef_environment='e_#{@env_id}'; n.run_list('role[#{node["role"]}]'); n.save"`
+            lognode nodename, "node is ready"
         end
+        sleep 1
     end
 
     threads.each do |t|
         t.join
     end
 
-    # add servers to environment
-    # add roles to the servers
     # run chef-client on them
 end
 
