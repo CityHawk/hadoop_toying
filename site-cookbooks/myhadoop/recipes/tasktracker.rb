@@ -17,5 +17,7 @@ jobtracker = search(:node,"chef_environment:#{node.chef_environment} AND role:na
 template "/etc/hadoop/conf/mapred-site.xml" do
     source "mapred-site.xml.erb"
     variables :jobtracker => jobtracker
+    group "hadoop"
+    mode 00644
     notifies :start, "service[hadoop-0.20-mapreduce-tasktracker]"
 end
