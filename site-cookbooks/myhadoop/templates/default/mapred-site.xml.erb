@@ -20,7 +20,7 @@
 <configuration>
     <property>
         <name>mapred.job.tracker</name>
-        <value><%= @jobtracker["ipaddress"] %>:8021</value>
+        <value><%= @jobtracker["fqdn"] %>:8021</value>
     </property>
     <property>
         <name>mapred.local.dir</name>

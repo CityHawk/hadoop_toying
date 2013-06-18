@@ -20,7 +20,7 @@
 <configuration>
     <property>
         <name>fs.default.name</name>
-        <value>hdfs://<%= @namenode["ipaddress"]%>:8020</value>
+        <value>hdfs://<%= @namenode["fqdn"]%>:8020</value>
     </property>
     <property>
         <name>dfs.name.dir</name>

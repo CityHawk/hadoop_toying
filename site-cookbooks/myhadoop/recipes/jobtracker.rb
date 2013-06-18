@@ -21,7 +21,9 @@ end
 directory "/data/1/mapred/local" do
     action :create
     recursive true
+    owner "mapred"
     group "hadoop"
+    mode 00775
 end
 
 jobtracker = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode").first

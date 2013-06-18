@@ -39,6 +39,15 @@ def server_ready? node
     return false
 end
 
+def dns_ready? hostname
+    begin
+        Socket.gethostbyname hostname
+        true
+    rescue
+        false
+    end
+end
+
 def create_node dropletname, size, image
     drop = @dc.droplets.create :name => dropletname,\
     :size_id => size, :image_id => image, :region_id => 1, :ssh_key_ids => @config_data['other']['ssh_key_id']
@@ -51,13 +60,17 @@ def create_node dropletname, size, image
         break if poll_drop.droplet.ip_address
         sleep 5
     end
+    rec = @dc.domains.create :name => dropletname, :ip_address => poll_drop.droplet.ip_address
+    lognode dropletname, " got ip address #{poll_drop.droplet.ip_address}. Creating record... #{status(rec)}"
+    sleep 300
+    while !dns_ready? dropletname do
+        sleep 30
+    end
     lognode dropletname, "waiting node to be accessible"
-    while !server_ready? poll_drop.droplet.ip_address do
+    while !server_ready? dropletname do
         sleep 10
     end
-    return poll_drop.droplet.ip_address
-    #printf "\nnode #{dropletname} got ip address #{poll_drop.droplet.ip_address}. Creating record..."
-    #rec = @dc.domains.create :name => dropletname, :ip_address => poll_drop.droplet.ip_address
+    return dropletname
     #puts status(rec)
 
 end
@@ -83,7 +96,7 @@ task :create do
             # add servers to environment
             # add roles to the servers
             lognode nodename, "setting  environment and run_list to #{node["role"]}"
-            `knife exec -E "n=Chef::Node.load('#{name}-#{@env_id}'); n.chef_environment='e_#{@env_id}'; n.run_list('role[#{node["role"]}]'); n.save"`
+            `knife exec -E "n=Chef::Node.load('#{nodename}'); n.chef_environment='e_#{@env_id}'; n.run_list('role[#{node["role"]}]'); n.save"`
             lognode nodename, "node is ready"
         end
         sleep 1
