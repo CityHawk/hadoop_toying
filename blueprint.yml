@@ -3,6 +3,10 @@ nodes:
         size: 64
         image: 284203
         role: namenode
+    nn-002:
+        size: 64
+        image: 284203
+        role: namenode
     dn-001:
         size: 62
         image: 284203

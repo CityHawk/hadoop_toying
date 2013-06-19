@@ -20,7 +20,11 @@
 <configuration>
     <property>
         <name>fs.default.name</name>
+        <% if @ha then %>
+        <value>hdfs://mycluster</value>
+        <% else %>
         <value>hdfs://<%= @namenode["fqdn"]%>:8020</value>
+        <% end %>
     </property>
     <property>
         <name>dfs.name.dir</name>
@@ -34,4 +38,37 @@
         <name>fs.checkpoint.dir</name>
         <value>/data/1/dfs/snn</value>
     </property>
+    <% if @ha then %>
+    <property>
+        <name>dfs.nameservices</name>
+        <value>mycluster</value>
+    </property>
+
+    <property>
+        <name>dfs.ha.namenodes.mycluster</name>
+        <value><%= @namenode.map{ |nn| nn.split("-")[0,2].join}.join(",") %></value>
+    </property>
+
+    <% @namenode.each do |nn| %>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.<%= nn.split("-")[0,2].join %></name>
+        <value><%= nn["fqdn"] %>:8020</value>
+    </property>
+
+    <property>
+        <name>dfs.namenode.http-address.mycluster.<%= nn.split("-")[0,2].join %></name>
+        <value><%= nn["fqdn"] %>:50070</value>
+    </property>
+
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://<%= @journalnodes.map{ |jn| "#{jn}:8485" }.join(";") %>/mycluster</value>
+    </property>
+
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/data/1/dfs/jn</value>
+    </property>
+
+    <% end %>
 </configuration>

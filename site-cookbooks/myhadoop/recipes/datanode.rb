@@ -12,11 +12,32 @@ directory "/data/1/dfs/dn" do
     group "hadoop"
 end
 
-namenode = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode").first
-
-template "/etc/hadoop/conf/core-site.xml" do
-    source "core-site.xml.erb"
-    group "hadoop"
-    variables :namenode => namenode
-    notifies :start, "service[hadoop-hdfs-datanode]", :immediately
+directory "/data/1/dfs/jn" do
+    action :create
+    recursive true
+    owner "hdfs"
+    group "hdfs"
 end
+
+namenodes = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode")
+if namenodes.length == 2
+    datanodes = search(:node,"chef_environment:#{node.chef_environment} AND role:datanode")
+    template "/etc/hadoop/conf/core-site.xml" do
+        source "core-site.xml.erb"
+        group "hadoop"
+        variables (:namenode => namenodes,
+                   :ha => true,
+                   :journalnodes => datanodes)
+        notifies :start, "service[hadoop-hdfs-datanode]", :immediately
+    end
+else
+    # in case of 3 or more nns it will fallback to the 1
+    template "/etc/hadoop/conf/core-site.xml" do
+        source "core-site.xml.erb"
+        group "hadoop"
+        variables (:namenode => namenodes.first,
+                   :ha => false)
+        notifies :start, "service[hadoop-hdfs-datanode]", :immediately
+    end
+end
+
