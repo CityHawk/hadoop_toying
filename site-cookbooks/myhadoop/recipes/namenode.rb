@@ -18,18 +18,17 @@ if namenodes.length == 2
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
-        variables (:namenode => namenodes,
+        variables :namenode => namenodes,
                    :ha => true,
-                   :journalnodes => datanodes)
-        notifies :start, "service[hadoop-hdfs-datanode]", :immediately
+                   :journalnodes => datanodes
     end
 else
     # in case of 3 or more nns it will fallback to the 1
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
-        variables (:namenode => namenodes.first,
-                   :ha => false)
+        variables :namenode => namenodes.first,
+                   :ha => false
     end
 end
 

@@ -46,23 +46,24 @@
 
     <property>
         <name>dfs.ha.namenodes.mycluster</name>
-        <value><%= @namenode.map{ |nn| nn.split("-")[0,2].join}.join(",") %></value>
+        <value><%= @namenode.map{ |nn| nn["hostname"].split("-")[0,2].join}.join(",") %></value>
     </property>
 
     <% @namenode.each do |nn| %>
     <property>
-        <name>dfs.namenode.rpc-address.mycluster.<%= nn.split("-")[0,2].join %></name>
+        <name>dfs.namenode.rpc-address.mycluster.<%= nn["hostname"].split("-")[0,2].join %></name>
         <value><%= nn["fqdn"] %>:8020</value>
     </property>
 
     <property>
-        <name>dfs.namenode.http-address.mycluster.<%= nn.split("-")[0,2].join %></name>
+        <name>dfs.namenode.http-address.mycluster.<%= nn["hostname"].split("-")[0,2].join %></name>
         <value><%= nn["fqdn"] %>:50070</value>
     </property>
+    <% end %>
 
     <property>
         <name>dfs.namenode.shared.edits.dir</name>
-        <value>qjournal://<%= @journalnodes.map{ |jn| "#{jn}:8485" }.join(";") %>/mycluster</value>
+        <value>qjournal://<%= @journalnodes.map{ |jn| "#{jn["fqdn"]}:8485" }.join(";") %>/mycluster</value>
     </property>
 
     <property>

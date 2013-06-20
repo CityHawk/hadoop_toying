@@ -25,9 +25,9 @@ if namenodes.length == 2
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
-        variables (:namenode => namenodes,
+        variables :namenode => namenodes,
                    :ha => true,
-                   :journalnodes => datanodes)
+                   :journalnodes => datanodes
         notifies :start, "service[hadoop-hdfs-datanode]", :immediately
     end
 else
@@ -35,8 +35,8 @@ else
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
-        variables (:namenode => namenodes.first,
-                   :ha => false)
+        variables :namenode => namenodes.first,
+                   :ha => false
         notifies :start, "service[hadoop-hdfs-datanode]", :immediately
     end
 end
