@@ -154,7 +154,8 @@ def create (params)
             # add servers to environment
             # add roles to the servers
             @log.info nodename + " setting  environment and run_list to #{node["role"]}"
-            `knife exec -E "n=Chef::Node.load('#{nodename}'); n.chef_environment='e_#{@env_id}'; n.run_list('role[#{node["role"]}]'); n.save"`
+            run_list = node["role"].map { |r| "'role[#{r}]'" }.join (",")
+            `knife exec -E "n=Chef::Node.load('#{nodename}'); n.chef_environment='e_#{@env_id}'; n.run_list(#{run_list}); n.save"`
             @log.info nodename + " node is ready"
         end
         sleep 1
