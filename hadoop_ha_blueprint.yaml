@@ -12,12 +12,12 @@ nodes:
     dn-001:
         size: 62
         image: 284203
-        role: [datanode, tasktracker]
+        role: [datanode, journalnode, tasktracker]
     dn-002:
         size: 62
         image: 284203
-        role: [datanode, tasktracker]
+        role: [datanode, journalnode, tasktracker]
     dn-003:
         size: 62
         image: 284203
-        role: [datanode, tasktracker]
+        role: [datanode, journalnode, tasktracker]

@@ -1,1 +1,1 @@
-default["myhadoop"]["namenode"]["primary"] = false
+default["hadoop"]["namenode"]["primary"] = false
