@@ -26,7 +26,7 @@ directory "/data/1/mapred/local" do
     mode 00775
 end
 
-jobtracker = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode").first
+jobtracker = search(:node,"chef_environment:#{node.chef_environment} AND role:jobtracker").first
 
 template "/etc/hadoop/conf/mapred-site.xml" do
     source "mapred-site.xml.erb"

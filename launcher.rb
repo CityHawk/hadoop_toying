@@ -18,7 +18,7 @@ class CreateCLI
         :short => "-b",
         :long => "--blueprint BLUEPRINT",
         :description => "Use blueprint",
-        :default => 'blueprint.yaml'
+        :default => 'blueprint.yml'
 
     option :env_id,
         :short => "-e",
@@ -128,7 +128,7 @@ def create_node dropletname, size, image
 end
 
 def create (params)
-    blueprint = YAML.load_file("blueprint.yml")
+    blueprint = YAML.load_file(params[:blueprint])
     if params[:env_id]
         @log.debug "Enforcing environment #{params[:env_id]}"
         @env_id = params[:env_id]

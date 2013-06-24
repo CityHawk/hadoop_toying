@@ -23,6 +23,12 @@ class Worker
                     :image => data["size"],
                     :roles => data["roles"],
                     :ssh_keys => config["ssh_keys"]
+                if @steps.include? create
+                    ip = n.create
+                end
+                if @steps.include? set_dns
+                    set_
+                end
             end
         end
 

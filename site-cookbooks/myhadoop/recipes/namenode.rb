@@ -14,13 +14,13 @@ end
 
 namenodes = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode")
 if namenodes.length == 2
-    datanodes = search(:node,"chef_environment:#{node.chef_environment} AND role:datanode")
+    journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:datanode")
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
         variables :namenode => namenodes,
                    :ha => true,
-                   :journalnodes => datanodes
+                   :journalnodes => journalnodes
     end
 else
     # in case of 3 or more nns it will fallback to the 1
@@ -32,9 +32,11 @@ else
     end
 end
 
-bash "format hdfs node" do
-    user "hdfs"
-    code "hdfs namenode -format"
-    creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-    notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+if node["hadoop"]["namenode"]["primary"]
+    bash "format hdfs node" do
+        user "hdfs"
+        code "hdfs namenode -format"
+        creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
+        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+    end
 end

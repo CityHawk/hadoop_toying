@@ -81,4 +81,9 @@ class Node
         log.info "converge is not implemented, ssh to the node and run chef-client manually"
 
     end
+
+    def get_node_ip
+        all_droplets = dc.droplets.list
+        
+    end
 end

@@ -1,7 +1,6 @@
 name "datanode"
-description "datanode and tasktracker"
+description "datanode"
 run_list "recipe[java]",
          "recipe[myhadoop]",
-         "recipe[myhadoop::datanode]",
-         "recipe[myhadoop::tasktracker]"
+         "recipe[myhadoop::datanode]"
 
