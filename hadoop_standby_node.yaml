@@ -1,0 +1,5 @@
+nodes:
+    nn-002:
+        size: 64
+        image: 284203
+        role: [namenode, jobtracker]

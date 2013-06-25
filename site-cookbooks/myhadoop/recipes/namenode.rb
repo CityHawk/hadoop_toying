@@ -39,4 +39,17 @@ if node["hadoop"]["namenode"]["primary"]
         creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
         notifies :start, "service[hadoop-hdfs-namenode]", :immediately
     end
+    if namenodes.length == 2
+        bash "init shared edits" do
+            user "hdfs"
+            code "hdfs namenode -initializeSharedEdits"
+        end
+    end
+else
+    bash "bootstrap standby" do
+        user "hdfs"
+        code "hdfs namenode -bootstrapStandby"
+        creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
+        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+    end
 end

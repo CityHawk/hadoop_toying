@@ -5,10 +5,6 @@ nodes:
         role: [namenode, jobtracker]
         attributes:
             hadoop.namenode.primary: Yes
-    nn-002:
-        size: 64
-        image: 284203
-        role: [namenode, jobtracker]
     dn-001:
         size: 62
         image: 284203
