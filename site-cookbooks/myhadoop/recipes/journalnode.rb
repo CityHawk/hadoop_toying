@@ -1,8 +1,8 @@
 directory "/data/1/dfs/jn" do
     action :create
     recursive true
-    owner "hdfs"
-    group "hdfs"
+    # owner "hdfs"
+    # group "hdfs"
 end
 
 service "hadoop-hdfs-journalnode" do

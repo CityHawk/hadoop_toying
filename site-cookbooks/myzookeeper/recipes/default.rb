@@ -20,7 +20,7 @@ service "zookeeper-server" do
 end
 
 package "zookeeper-server" do
-    action install
+    action :install
 end
 
 template "/var/lib/zookeeper/myid" do

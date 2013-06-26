@@ -14,7 +14,7 @@ end
 
 namenodes = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode")
 if namenodes.length == 2
-    journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:datanode")
+    journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:journalnode")
     template "/etc/hadoop/conf/core-site.xml" do
         source "core-site.xml.erb"
         group "hadoop"
@@ -39,12 +39,13 @@ if node["hadoop"]["namenode"]["primary"]
         creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
         notifies :start, "service[hadoop-hdfs-namenode]", :immediately
     end
-    if namenodes.length == 2
-        bash "init shared edits" do
-            user "hdfs"
-            code "hdfs namenode -initializeSharedEdits"
-        end
-    end
+    # if namenodes.length == 2
+    #     bash "init shared edits" do
+    #         user "hdfs"
+    #         code "hdfs namenode -initializeSharedEdits"
+    #         ignore_failure true
+    #     end
+    # end
 else
     bash "bootstrap standby" do
         user "hdfs"

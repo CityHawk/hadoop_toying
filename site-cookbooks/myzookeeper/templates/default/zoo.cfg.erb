@@ -4,5 +4,5 @@ clientPort=2181
 initLimit=5
 syncLimit=2
 <% @zoonodes.each do |zn| %>
-server.<%= zn["hostname"].split("-")[1,2].to_i.to_s %>=<%= zn["fqdn"]%>:2888:3888
+server.<%= zn["hostname"].split("-")[1].to_i.to_s %>=<%= zn["fqdn"]%>:2888:3888
 <% end %>
