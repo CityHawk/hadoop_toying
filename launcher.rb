@@ -9,7 +9,7 @@ require 'mixlib/cli'
 @log.datetime_format = "%Y-%m-%d %H:%M:%S "
 
 
-@dc = DigitalOcean::API.new :client_id => @config_data['authentication']['client_key'], :api_key => @config_data['authentication']['api_key'] #, :debug => true
+@dc = DigitalOcean::API.new :client_id => @config_data['authentication']['client_key'], :api_key => @config_data['authentication']['api_key'] , :debug => true
 
 class CreateCLI
     include Mixlib::CLI
@@ -150,7 +150,7 @@ def create (params)
             #knife bootstap servers
             @log.info nodename + " bootstrapping node"
             `knife bootstrap #{fnode} -x root --no-host-key-verify`
-            @log.info nodename + "bootstrap node finished, exit code #{$?.to_i}"
+            @log.info nodename + " bootstrap node finished, exit code #{$?.to_i}"
             # add servers to environment
             # add roles to the servers
             @log.info nodename + " setting  environment and run_list to #{node["role"]}"

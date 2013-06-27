@@ -71,5 +71,21 @@
         <value>/data/1/dfs/jn</value>
     </property>
 
+
+    <% if @zookeepers.length > 0 %>
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value><%= @zookeepers.map{ |zk| "#{zk["fqdn"]}:2181" }.join(",") %></value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/var/lib/hadoop-hdfs/.ssh/id_rsa</value>
+    </property>
+    <% end %>
+
     <% end %>
 </configuration>

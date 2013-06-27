@@ -16,6 +16,7 @@ apt_repository "cloudera" do
 end
 
 service "zookeeper-server" do
+    supports :status => true, :restart => true, :init => true
     action :nothing
 end
 
@@ -25,6 +26,13 @@ end
 
 template "/var/lib/zookeeper/myid" do
     source "myid.erb"
+    owner "zookeeper"
+    group "zookeeper"
+end
+
+bash "zookeeper-server-init" do
+    code "service zookeeper-server init"
+    creates "/var/lib/zookeeper/version-2"
 end
 
 zoonodes=search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
