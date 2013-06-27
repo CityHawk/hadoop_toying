@@ -54,20 +54,20 @@ if namenodes.length == 2
             action :install
         end
 
-        if node["hadoop"]["namenode"]["primary"]
-            bash "format ZK" do
-                user "hdfs"
-                code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
-                creates "/var/tmp/zkformatted"
-            end
-        end
+        # if node["hadoop"]["namenode"]["primary"]
+        #     bash "format ZK" do
+        #         user "hdfs"
+        #         code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
+        #         creates "/var/tmp/zkformatted"
+        #     end
+        # end
 
         template "/etc/hadoop/conf/hdfs-site.xml" do
             source "hdfs-site.xml.erb"
             group "hadoop"
             variables :ha => true,
             :zookeepers => zookeepers
-            notifies :restart, "service[hadoop-hdfs-zkfc]", :immediately
+            notifies :restart, "service[hadoop-hdfs-zkfc]", :delayed
         end
     else
         template "/etc/hadoop/conf/hdfs-site.xml" do
@@ -92,7 +92,7 @@ if node["hadoop"]["namenode"]["primary"]
         user "hdfs"
         code "hdfs namenode -format"
         creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+        notifies :start, "service[hadoop-hdfs-namenode]", :delayed
     end
     # if namenodes.length == 2
     #     bash "init shared edits" do
@@ -106,6 +106,6 @@ else
         user "hdfs"
         code "hdfs namenode -bootstrapStandby"
         creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+        notifies :start, "service[hadoop-hdfs-namenode]", :delayed
     end
 end

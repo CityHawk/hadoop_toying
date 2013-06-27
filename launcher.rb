@@ -9,7 +9,7 @@ require 'mixlib/cli'
 @log.datetime_format = "%Y-%m-%d %H:%M:%S "
 
 
-@dc = DigitalOcean::API.new :client_id => @config_data['authentication']['client_key'], :api_key => @config_data['authentication']['api_key'] , :debug => true
+@dc = DigitalOcean::API.new :client_id => @config_data['authentication']['client_key'], :api_key => @config_data['authentication']['api_key'] #, :debug => true
 
 class CreateCLI
     include Mixlib::CLI
@@ -98,7 +98,7 @@ end
 
 def create_node dropletname, size, image
     drop = @dc.droplets.create :name => dropletname,\
-    :size_id => size, :image_id => image, :region_id => 1, :ssh_key_ids => @config_data['other']['ssh_key_id']
+    :size_id => size, :image_id => image, :region_id => 3, :ssh_key_ids => @config_data['other']['ssh_key_id']
     #@log.info drop
     @log.info dropletname + " node created"
     # wait until DNS changes propagate
