@@ -54,20 +54,20 @@ if namenodes.length == 2
             action :install
         end
 
-        # if node["hadoop"]["namenode"]["primary"]
-        #     bash "format ZK" do
-        #         user "hdfs"
-        #         code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
-        #         creates "/var/tmp/zkformatted"
-        #     end
-        # end
-
         template "/etc/hadoop/conf/hdfs-site.xml" do
             source "hdfs-site.xml.erb"
             group "hadoop"
             variables :ha => true,
             :zookeepers => zookeepers
-            notifies :restart, "service[hadoop-hdfs-zkfc]", :delayed
+        end
+
+        if node["hadoop"]["namenode"]["primary"]
+            bash "format ZK" do
+                user "hdfs"
+                code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
+                creates "/var/tmp/zkformatted"
+                notifies :restart, "service[hadoop-hdfs-zkfc]", :immediately
+            end
         end
     else
         template "/etc/hadoop/conf/hdfs-site.xml" do
@@ -92,7 +92,7 @@ if node["hadoop"]["namenode"]["primary"]
         user "hdfs"
         code "hdfs namenode -format"
         creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-        notifies :start, "service[hadoop-hdfs-namenode]", :delayed
+        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
     end
     # if namenodes.length == 2
     #     bash "init shared edits" do
@@ -102,10 +102,10 @@ if node["hadoop"]["namenode"]["primary"]
     #     end
     # end
 else
-    bash "bootstrap standby" do
-        user "hdfs"
-        code "hdfs namenode -bootstrapStandby"
-        creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-        notifies :start, "service[hadoop-hdfs-namenode]", :delayed
-    end
+    # bash "bootstrap standby" do
+    #     user "hdfs"
+    #     code "hdfs namenode -bootstrapStandby"
+    #     creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
+    #     notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+    # end
 end
