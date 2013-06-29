@@ -61,6 +61,7 @@
     </property>
     <% end %>
 
+    <% if @qjm %>
     <property>
         <name>dfs.namenode.shared.edits.dir</name>
         <value>qjournal://<%= @journalnodes.map{ |jn| "#{jn["fqdn"]}:8485" }.join(";") %>/mycluster</value>
@@ -70,9 +71,10 @@
         <name>dfs.journalnode.edits.dir</name>
         <value>/data/1/dfs/jn</value>
     </property>
+    <% end %>
 
 
-    <% if @zookeepers.length > 0 %>
+    <% if @autofailover %>
     <property>
         <name>ha.zookeeper.quorum</name>
         <value><%= @zookeepers.map{ |zk| "#{zk["fqdn"]}:2181" }.join(",") %></value>

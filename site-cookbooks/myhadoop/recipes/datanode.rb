@@ -12,35 +12,50 @@ directory "/data/1/dfs/dn" do
     group "hadoop"
 end
 
+# configure our setup
 namenodes = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode")
 if namenodes.length == 2
-    journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:journalnode")
-    zookeepers = search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
-    template "/etc/hadoop/conf/core-site.xml" do
-        source "core-site.xml.erb"
-        group "hadoop"
-        variables :namenode => namenodes,
-                   :ha => true,
-                   :journalnodes => journalnodes,
-                   :zookeepers => zookeepers
-        notifies :start, "service[hadoop-hdfs-datanode]", :immediately
-    end
-    if zookeepers.length > 0
-        template "/etc/hadoop/conf/hdfs-site.xml" do
-            source "hdfs-site.xml.erb"
-            group "hadoop"
-            variables :ha => true,
-            :zookeepers => zookeepers
-        end
-    end
+    ha = true
+    primarynn = search(:node,"chef_environment:#{node.chef_environment} AND hadoop_namenode_primary:true").first
 else
-    # in case of 3 or more nns it will fallback to the 1
-    template "/etc/hadoop/conf/core-site.xml" do
-        source "core-site.xml.erb"
-        group "hadoop"
-        variables :namenode => namenodes.first,
-                   :ha => false
-        notifies :start, "service[hadoop-hdfs-datanode]", :immediately
-    end
+    ha = false
 end
 
+if node["hadoop"]["namenode"]["primary"]
+    primary = true
+else
+    primary = false
+end
+
+journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:journalnode")
+if journalnodes && journalnodes.length > 0
+    qjm = true
+else
+    qjm = false
+end
+
+zookeepers = search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
+if zookeepers && zookeepers.length > 0
+    autofailover = true
+else
+    autofailover = false
+end
+
+template "/etc/hadoop/conf/core-site.xml" do
+    source "core-site.xml.erb"
+    group "hadoop"
+    variables :namenode => namenodes,
+    :ha => ha,
+    :qjm => qjm,
+    :autofailover => autofailover,
+    :journalnodes => journalnodes,
+    :zookeepers => zookeepers
+end
+
+template "/etc/hadoop/conf/hdfs-site.xml" do
+    source "hdfs-site.xml.erb"
+    group "hadoop"
+    variables :ha => ha,
+    :zookeepers => zookeepers
+    notifies :start, "service[hadoop-hdfs-datanode]", :immediately
+end

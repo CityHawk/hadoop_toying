@@ -12,110 +12,108 @@ directory "/data/1/dfs/nn" do
     recursive true
 end
 
+# configure our setup
 namenodes = search(:node,"chef_environment:#{node.chef_environment} AND role:namenode")
 if namenodes.length == 2
-    journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:journalnode")
-    zookeepers = search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
-    template "/etc/hadoop/conf/core-site.xml" do
-        source "core-site.xml.erb"
-        group "hadoop"
-        variables :namenode => namenodes,
-                   :ha => true,
-                   :journalnodes => journalnodes,
-                   :zookeepers => zookeepers
-    end
-    if zookeepers && zookeepers.length > 0
-        # fencing keys
-        directory "/var/lib/hadoop-hdfs/.ssh" do
-            owner "hdfs"
-            group "hdfs"
-            mode 00700
-        end
-
-        cookbook_file "/var/lib/hadoop-hdfs/.ssh/id_rsa" do
-            source "sshfence"
-            owner "hdfs"
-            group "hdfs"
-            mode 00600
-        end
-
-        cookbook_file "/var/lib/hadoop-hdfs/.ssh/authorized_keys" do
-            source "sshfence.pub"
-            owner "hdfs"
-            group "hdfs"
-            mode 00600
-        end
-
-        service "hadoop-hdfs-zkfc" do
-            action :nothing
-        end
-
-        package "hadoop-hdfs-zkfc" do
-            action :install
-        end
-
-        template "/etc/hadoop/conf/hdfs-site.xml" do
-            source "hdfs-site.xml.erb"
-            group "hadoop"
-            variables :ha => true,
-            :zookeepers => zookeepers
-        end
-
-        if node["hadoop"]["namenode"]["primary"]
-            bash "format ZK" do
-                user "hdfs"
-                code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
-                creates "/var/tmp/zkformatted"
-                notifies :restart, "service[hadoop-hdfs-zkfc]", :immediately
-            end
-        end
-    else
-        template "/etc/hadoop/conf/hdfs-site.xml" do
-            source "hdfs-site.xml.erb"
-            group "hadoop"
-            variables :ha => true,
-            :zookeepers => zookeepers
-        end
-    end
-    if node["hadoop"]["namenode"]["primary"]
-        bash "format hdfs node" do
-            user "hdfs"
-            code "hdfs namenode -format"
-            creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-            notifies :start, "service[hadoop-hdfs-namenode]", :immediately
-        end
-    else
-        if zookeepers && zookeepers.length > 2
-            primarynn = search(:node,"chef_environment:#{node.chef_environment} AND hadoop_namenode_primary:true").first
-            bash "rsync standby" do
-                user "hdfs"
-                code "rsync -avz -e ssh hdfs@#{primarynn["fqdn"]}:/var/lib/hadoop-hdfs/cache/* /var/lib/hadoop-hdfs/cache/"
-                creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-                notifies :start, "service[hadoop-hdfs-namenode]", :immediately
-            end
-        else
-            bash "bootstrap standby" do
-                user "hdfs"
-                code "hdfs namenode -bootstrapStandby"
-                creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-                notifies :start, "service[hadoop-hdfs-namenode]", :immediately
-            end
-        end
-    end
+    ha = true
+    primarynn = search(:node,"chef_environment:#{node.chef_environment} AND hadoop_namenode_primary:true").first
 else
-    # in case of 3 or more nns it will fallback to the 1
-    template "/etc/hadoop/conf/core-site.xml" do
-        source "core-site.xml.erb"
-        group "hadoop"
-        variables :namenode => namenodes.first,
-                   :ha => false
-    end
+    ha = false
+end
 
-    bash "format hdfs node" do
-        user "hdfs"
-        code "hdfs namenode -format"
-        creates "/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION"
-        notifies :start, "service[hadoop-hdfs-namenode]", :immediately
-    end
+if node["hadoop"]["namenode"]["primary"]
+    primary = true
+else
+    primary = false
+end
+
+journalnodes = search(:node,"chef_environment:#{node.chef_environment} AND role:journalnode")
+if journalnodes && journalnodes.length > 0
+    qjm = true
+else
+    qjm = false
+end
+
+zookeepers = search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
+if zookeepers && zookeepers.length > 0
+    autofailover = true
+else
+    autofailover = false
+end
+
+# fencing and rsync keys
+directory "/var/lib/hadoop-hdfs/.ssh" do
+    only_if { ha }
+    owner "hdfs"
+    group "hdfs"
+    mode 00700
+end
+
+cookbook_file "/var/lib/hadoop-hdfs/.ssh/id_rsa" do
+    only_if { ha }
+    source "sshfence"
+    owner "hdfs"
+    group "hdfs"
+    mode 00600
+end
+
+cookbook_file "/var/lib/hadoop-hdfs/.ssh/authorized_keys" do
+    only_if { ha }
+    source "sshfence.pub"
+    owner "hdfs"
+    group "hdfs"
+    mode 00600
+end
+
+
+template "/etc/hadoop/conf/core-site.xml" do
+    source "core-site.xml.erb"
+    group "hadoop"
+    variables :namenode => namenodes,
+    :ha => ha,
+    :qjm => qjm,
+    :autofailover => autofailover,
+    :journalnodes => journalnodes,
+    :zookeepers => zookeepers
+end
+
+template "/etc/hadoop/conf/hdfs-site.xml" do
+    source "hdfs-site.xml.erb"
+    group "hadoop"
+    variables :ha => ha,
+    :autofailover => autofailover,
+    :zookeepers => zookeepers
+end
+
+
+service "hadoop-hdfs-zkfc" do
+    action :nothing
+    only_if { ha && autofailover }
+end
+
+package "hadoop-hdfs-zkfc" do
+    action :install
+    only_if { ha && autofailover }
+end
+
+bash "format ZK" do
+    user "hdfs"
+    code "hdfs zkfc -formatZK && touch /var/tmp/zkformatted"
+    only_if { !File.exists?("/var/tmp/zkformatted") && ha && primary && autofailover }
+    notifies :restart, "service[hadoop-hdfs-zkfc]", :delayed
+end
+
+bash "format hdfs node" do
+    user "hdfs"
+    code "hdfs namenode -format"
+    only_if { !File.exist?("/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION") && ( primary || !ha ) }
+    notifies :start, "service[hadoop-hdfs-namenode]", :immediately
+end
+
+bash "rsync standby" do
+    user "hdfs"
+    code "rsync -avz -e 'ssh -o StrictHostKeyChecking=no' hdfs@#{primarynn["fqdn"]}:/var/lib/hadoop-hdfs/cache/* /var/lib/hadoop-hdfs/cache/"
+    only_if { !File.exist?("/var/lib/hadoop-hdfs/cache/hdfs/dfs/name/current/VERSION") && ha && !primary }
+    notifies :start, "service[hadoop-hdfs-namenode]", :immediately
 end
 

@@ -33,11 +33,11 @@ end
 zoonodes=search(:node,"chef_environment:#{node.chef_environment} AND role:zookeeper")
 template "/etc/zookeeper/conf/zoo.cfg" do
     source "zoo.cfg.erb"
-    notifies :restart, "service[zookeeper-server]", :delayed
     variables :zoonodes => zoonodes
 end
 
 bash "zookeeper-server-init" do
     code "service zookeeper-server init"
     creates "/var/lib/zookeeper/version-2"
+    notifies :restart, "service[zookeeper-server]", :delayed
 end
