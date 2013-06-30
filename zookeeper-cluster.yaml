@@ -1,0 +1,13 @@
+nodes:
+    zk-001:
+        size: 66
+        image: 284203
+        role: [zookeeper]
+    zk-002:
+        size: 66
+        image: 284203
+        role: [zookeeper]
+    zk-003:
+        size: 66
+        image: 284203
+        role: [zookeeper]

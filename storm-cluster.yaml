@@ -1,0 +1,37 @@
+nodes:
+    nimbus-001:
+        size: 66
+        image: 284203
+        role: [nimbus, ui]
+    supervisor-001:
+        size: 66
+        image: 284203
+        role: [supervisor]
+    supervisor-002:
+        size: 66
+        image: 284203
+        role: [supervisor]
+    supervisor-003:
+        size: 66
+        image: 284203
+        role: [supervisor]
+    supervisor-004:
+        size: 66
+        image: 284203
+        role: [supervisor]
+    supervisor-005:
+        size: 66
+        image: 284203
+        role: [supervisor]
+    zk-001:
+        size: 66
+        image: 284203
+        role: [zookeeper]
+    zk-002:
+        size: 66
+        image: 284203
+        role: [zookeeper]
+    zk-003:
+        size: 66
+        image: 284203
+        role: [zookeeper]

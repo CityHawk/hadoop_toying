@@ -114,7 +114,8 @@ def create_node dropletname, size, image
     else
         @log.error dropletname + " got ip address #{poll_drop.droplet.ip_address}. Failed to create DNS record."
     end
-    sleep 300
+    # prevent DNS cache poisoning
+    sleep 180
     while !dns_ready? dropletname do
         sleep 30
     end
